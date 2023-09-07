@@ -10,5 +10,6 @@
 <style lang="scss">
 .main-header {
   border: 1px solid red;
+  color: #fff;
 }
 </style>

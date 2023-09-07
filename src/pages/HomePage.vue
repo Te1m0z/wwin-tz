@@ -1,12 +1,10 @@
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
+import { defineComponent } from 'vue'
 import { gsap } from 'gsap'
-import { ActionButton, removeAllDataAttributes } from '@/shared'
+import { ActionButton, removeAllDataAttributes, recalculatePositions } from '@/shared'
 import { PokerCard } from '@/features'
 // заглушки на сервере
-import { type TCard, type TClosedCard, getClosedCards, openCardOnServer } from '@/_mocks/cards'
-
-const REF_PREFIX = 'card-1' as const
+import { type TCard, getClosedCards, openCardOnServer } from '@/_mocks/cards'
 
 export default defineComponent({
   name: 'HomePage',
@@ -15,11 +13,9 @@ export default defineComponent({
     PokerCard,
   },
   data() {
-    // прабрасываем константы для использрвания в шаблоне
     return {
-      REF_PREFIX,
-      closedCards: <TClosedCard[]>[],
-      openedCards: <TCard[]>[],
+      isActionDisabled: false,
+      cards: <TCard[]>[],
     }
   },
   created() {
@@ -34,82 +30,68 @@ export default defineComponent({
           return items.map((i) => ({ ...i, isOpen: false }))
         })
       //
-      //
-      this.closedCards.splice(0, this.closedCards.length, ...cards)
+      this.cards.splice(0, this.cards.length, ...cards)
     },
     async openCard() {
+      //
+      this.isActionDisabled = true;
       //
       const response = await openCardOnServer()
       //
       if (!response) return window.alert('Some error on server');
       //
-      const { selected_card } = response
-      // ищем индекс для удаления среди закрытых
-      const closedSelected = this.closedCards.find((card) => card.id === selected_card.id)
+      const { id, card_number, card_type } = response
+      // Ищем карточку среди своих на фронтенде в Vue
+      const vueSelectedCard = this.cards.find((card) => card.id === id)
       //
-      if (!closedSelected) return;
+      if (!vueSelectedCard) return;
+      // делаем модификации
+      vueSelectedCard.card_number = card_number
+      vueSelectedCard.card_type = card_type
+      vueSelectedCard.isOpen = true;
+      // Ищем карточку в HTML дереве
+      const htmlSelectedCard = document.querySelector(`[data-card-id="${id}"]`)
       //
-      closedSelected.isOpen = true;
+      if (!htmlSelectedCard) return;
       //
-      const nodeInClosed = document.querySelector(`[data-card-id="${closedSelected.id}"]`)
-      //
-      if (!nodeInClosed) return;
-      //
-      this.$nextTick(() => nodeInClosed.classList.add('moving'));
+      this.$nextTick(() => htmlSelectedCard.classList.add('moving'));
       // заглушка для позиции
-      const openedSelected = nodeInClosed.cloneNode(true) as HTMLDivElement
+      const htmlCloneSelectedCard = htmlSelectedCard.cloneNode(true) as HTMLDivElement
       // модификации заглушки
-      openedSelected.classList.add('hide')
-      removeAllDataAttributes(openedSelected)
+      htmlCloneSelectedCard.classList.add('hide')
+      removeAllDataAttributes(htmlCloneSelectedCard)
+      htmlCloneSelectedCard.setAttribute('data-card-was-id', String(id));
       //
       const openedCardsRow = this.$refs['openedCardsRow'] as HTMLDivElement;
       //
       if (!openedCardsRow) return;
+      // Добавляем заглушку в DOM дерево
+      openedCardsRow.append(htmlCloneSelectedCard)
       //
-      openedCardsRow.append(openedSelected)
       //
       setTimeout(() => {
-        const originalRect = nodeInClosed.getBoundingClientRect();
-        const targetRect = openedSelected.getBoundingClientRect();
+        recalculatePositions()
+        const originalRect = htmlSelectedCard.getBoundingClientRect();
+        const targetRect = htmlCloneSelectedCard.getBoundingClientRect();
         //
         // Calculate the difference in positions
         const deltaX = targetRect.left - originalRect.left;
         const deltaY = targetRect.top - originalRect.top;
 
-        gsap.to(nodeInClosed, {
+        gsap.to(htmlSelectedCard, {
           x: deltaX,
           y: deltaY,
           duration: 1,
+          onStart: () => {
+            //recalculatePositions()
+          },
           onComplete: () => {
-            nodeInClosed.classList.remove('moving');
+            htmlSelectedCard.classList.remove('moving');
             //
-            // const closedDeleteIndx = this.closedCards.findIndex((card) => card.id === selected_card.id)
-            // //
-            // if (closedDeleteIndx === -1) return;
-            // // удаляем на фронтенде
-            // this.closedCards.splice(closedDeleteIndx, 1);
+            this.isActionDisabled = false;
           }
         });
       }, 1000);
-      // // добавляем в выбранные на фронтенде
-      // this.openedCards.push(selected_card)
-      // //
-      // const { id } = selected_card
-      // // Перед стартом анимации - возьмем координаты на экране
-      // const selectedCardNode = document.querySelector(`[data-card-id="${id}"]`)
-      // //
-      // if (!selectedCardNode) return
-      // //
-      // //const rect = selectedCardNode.getBoundingClientRect();
-      // //
-      // console.log(selectedCardNode)
-
-      // DOM изменения закончены, можно начинать анимацию
-
-      //
-      // this.$nextTick(() => {
-      //   console.log(document.querySelector(`[data-card-id="${selected_card.id}"]`))
-      // })
     },
   }
 })
@@ -119,24 +101,22 @@ export default defineComponent({
 
 <template>
   <div class="page home-page">
-    <div class="cards cards--opened" ref="openedCardsRow">
+    
+    <div class="cards cards--opened" ref="openedCardsRow"></div>
+
+    <div class="cards cards--closed">
       <PokerCard
-        v-if="openedCards.length > 0"
-        v-for="card in openedCards"
+        v-if="cards.length > 0"
+        v-for="card in cards"
         :key="card.id"
         v-bind="card"
       />
     </div>
-    <div v-if="closedCards.length > 0" class="cards cards--closed">
-      <PokerCard
-        v-for="card in closedCards"
-        :key="card.id"
-        v-bind="card"
-      />
-    </div>
+
     <ActionButton
         width="64px"
         height="64px"
+        :disabled="isActionDisabled"
         @click="openCard"
     >
       RAND
@@ -147,9 +127,15 @@ export default defineComponent({
 <style lang="scss">
 .cards {
   display: flex;
+  flex-flow: row wrap;
   align-items: center;
-  min-height: 297px;
+  min-height: 296px;
+  justify-content: center;
   //margin: -10px;
+
+  @include md {
+    min-height: 200px;
+  }
 
   & .action-button {
     margin-left: 100px;

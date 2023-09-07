@@ -6,6 +6,7 @@ interface TProps {
     height?: string,
     radius?: string,
     bg?: 'red' | 'yellow' | 'green',
+    disabled?: boolean,
 }
 
 const props = withDefaults(defineProps<TProps>(), {
@@ -13,6 +14,7 @@ const props = withDefaults(defineProps<TProps>(), {
     height: 'auto',
     radius: '100%',
     bg: 'green',
+    disabled: false,
 })
 
 const emit = defineEmits(['click'])
@@ -24,7 +26,7 @@ function buttonClick(event: MouseEvent) {
 </script>
 
 <template>
-    <button :class="['action-button', bg]" @click="buttonClick">
+    <button :class="['action-button', bg]" @click="buttonClick" :disabled="disabled">
         <slot />
     </button>
 </template>
@@ -43,6 +45,11 @@ function buttonClick(event: MouseEvent) {
     &.green {
         border-color: v-bind('theme.COLORS.greenDark');
         background-color: v-bind('theme.COLORS.greenLight');
+    }
+
+    &:disabled {
+        opacity: 0.3;
+        cursor: auto;
     }
 }
 </style>

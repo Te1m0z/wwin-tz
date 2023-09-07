@@ -1,36 +1,39 @@
 // Имитация сервера
 // данные предоставляются на фронтенд в закрытом виде (только id и тп..)
 
+enum CARD_TYPES {
+    CHERVI = 'chervi',
+    PICKI = 'picki',
+    BUBNI = 'bubni',
+    KRESTI = 'kresti',
+}
+
 type TCard = {
-    id: number,
+    id: number
     // возможно здесь подошли бы бит. маски
-    card_type: 'chervi' | 'picki' | 'bubni' | 'kresti',
-    card_number: number;
+    card_type?: Lowercase<keyof typeof CARD_TYPES>
+    card_number?: number
+    // frontend
+    isOpen?: boolean
 }
 
 type TClosedCard = Pick<TCard, 'id'> & { isOpen?: boolean }
-
-type TOpenedResponse = {
-    selected_card: TCard,
-    closed_cards: TClosedCard[],
-    opened_cards: TCard[],
-}
 
 // Карточки которые выдались - храню в оперативной памяти
 const closed_cards: TCard[] = [
     {
         id: 1,
-        card_type: 'chervi',
+        card_type: CARD_TYPES.KRESTI,
         card_number: 6
     },
     {
         id: 2,
-        card_type: 'picki',
+        card_type: CARD_TYPES.BUBNI,
         card_number: 20
     },
     {
         id: 3,
-        card_type: 'bubni',
+        card_type: CARD_TYPES.CHERVI,
         card_number: 11
     }
 ]
@@ -38,7 +41,7 @@ const closed_cards: TCard[] = [
 const opened_cards: TCard[] = []
 
 
-async function openCardOnServer(): Promise<TOpenedResponse | null> {
+async function openCardOnServer(): Promise<TCard | null> {
     //
     if (!closed_cards.length) return null;
     //
@@ -54,11 +57,7 @@ async function openCardOnServer(): Promise<TOpenedResponse | null> {
     // добавляем в массив открытых
     opened_cards.push(randomCard);
     //
-    return {
-        selected_card: randomCard,
-        closed_cards,
-        opened_cards,
-    };
+    return randomCard;
 }
 
 async function getClosedCards(): Promise<TClosedCard[]> {
@@ -66,6 +65,7 @@ async function getClosedCards(): Promise<TClosedCard[]> {
 }
 
 export {
+    CARD_TYPES,
     type TCard,
     type TClosedCard,
     closed_cards,

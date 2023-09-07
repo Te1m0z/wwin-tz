@@ -9,6 +9,7 @@
 
 <style>
 .main-footer {
-  border: 1px solid blue;
+  border: 1px solid purple;
+  color: #fff;
 }
 </style>
