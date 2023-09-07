@@ -1,0 +1,44 @@
+body,
+html {
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: $black;
+  //background-color: $darkBlue;
+}
+
+#app {
+  display: flex;
+  flex-flow: column nowrap;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+.container {
+  width: 100%;
+  max-width: 800px;
+  padding: 0 15px;
+  margin: 0 auto;
+  height: 100%;
+}
+
+img {
+  object-fit: cover;
+}
+
+a {
+  @include hover {
+    color: inherit;
+  }
+}
+
+.hide {
+  opacity: 0;
+  visibility: hidden;
+}
