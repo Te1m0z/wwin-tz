@@ -6,7 +6,7 @@ import { PokerCard } from '@/features'
 // заглушки на сервере
 import { type TCard, type TClosedCard, getClosedCards, openCardOnServer } from '@/_mocks/cards'
 
-const REF_PREFIX = 'card-' as const
+const REF_PREFIX = 'card-1' as const
 
 export default defineComponent({
   name: 'HomePage',
