@@ -1,6 +1,7 @@
 import { gsap } from 'gsap'
 
 export function recalculatePositions() {
+  console.log('recalculatePositions')
     // заглушки
     const hideCards = document.querySelectorAll('.poker-card.hide');
     //

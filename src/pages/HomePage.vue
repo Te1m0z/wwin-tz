@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { gsap } from 'gsap'
-import { ActionButton, removeAllDataAttributes, recalculatePositions } from '@/shared'
+import { ActionButton, removeAllDataAttributes, recalculatePositions, debounce } from '@/shared'
 import { PokerCard } from '@/features'
 // заглушки на сервере
 import { type TCard, getClosedCards, openCardOnServer } from '@/_mocks/cards'
@@ -20,6 +20,12 @@ export default defineComponent({
   },
   created() {
     this.fetchClosedCards();
+  },
+  mounted() {
+    window.addEventListener('resize', debounce(recalculatePositions, 500));
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', recalculatePositions);
   },
   methods: {
     async fetchClosedCards() {
@@ -67,7 +73,6 @@ export default defineComponent({
       if (!openedCardsRow) return;
       // Добавляем заглушку в DOM дерево
       openedCardsRow.append(htmlCloneSelectedCard)
-      //
       //
       setTimeout(() => {
         recalculatePositions()
